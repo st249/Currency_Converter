@@ -83,18 +83,22 @@ namespace CurrencyConvertor.Application
 
         private async Task CreateRateGraph(List<string> symboles)
         {
-            for (int i = 0; i <= _instance._rates.Count - 1; i++)
+            await Task.Run(() =>
             {
-                for (int j = i + 1; j < _instance._rates.Count; j++)
+                for (int i = 0; i <= _instance._rates.Count - 1; i++)
                 {
-                    if (_instance._rates[i][j] == 0)
+                    for (int j = i + 1; j < _instance._rates.Count; j++)
                     {
-                        _instance._rates[i][j] = FindRateByShortestPath(i, j);
-                        _instance._rates[j][i] = (double)1 / _instance._rates[i][j];
-                        _instance._pathGraph[i][j] = 1;
+                        if (_instance._rates[i][j] == 0)
+                        {
+                            _instance._rates[i][j] = FindRateByShortestPath(i, j);
+                            _instance._rates[j][i] = (double)1 / _instance._rates[i][j];
+                            _instance._pathGraph[i][j] = 1;
+                        }
                     }
                 }
-            }
+            });
+
         }
 
         private double FindRateByShortestPath(int sourccCurrencyIndex, int destCurrencyIndex)
@@ -169,8 +173,13 @@ namespace CurrencyConvertor.Application
 
         public async Task<double> Convert(CurrencyConvertInput input)
         {
-            var rate = GetRelatedRate(input.SourceCurrency, input.DestCurrency);
-            return rate * input.Amount;
+            double rate = 0;
+            await Task.Run(() =>
+            {
+                var rate = GetRelatedRate(input.SourceCurrency, input.DestCurrency);
+                rate = rate * input.Amount;
+            });
+            return rate;
         }
 
         private double GetRelatedRate(string sourceCurr, string destCurr)
